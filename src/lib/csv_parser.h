@@ -8,18 +8,15 @@
 #include <string.h>
 
 #define ARENA_IMPLEMENTATION
-
 #include "../../resources/arena.h"
 
 #define ORGMODEPARSERC_H_
 
 #ifndef CUSTOM_ALLOC
 #define CUSTOM_ALLOC
-#define CSV_ALLOC _arena_context_alloc // global alloc
-// #define CSV_ALLOC _arena_context_alloc_noshare // thread safe, no shared
+// #define CSV_ALLOC _arena_context_alloc // global alloc
+#define CSV_ALLOC _arena_context_alloc_noshare // thread safe, no shared
 #endif
-
-#define not_implemented crash(__PRETTY_FUNCTION__, " not implemented yet")
 
 #define MIN_ARENA 1048576 // 2^20
 
@@ -33,24 +30,14 @@ void *_arena_context_alloc(size_t size);
 #define MAX_NAME_CELL 80
 
 typedef struct _csv_adt {
-  char **header_names;
-  int current_count_row;
-  int columns_count;
-  int max_name_cell;
-  Arena *context_arena;
-} csv_adt;
-
-typedef struct _csv_adt_full {
-  char **header_names;
   char **columns_names;
+  char **raw_data;
   int columns_count;
   int current_count_row;
   int max_name_cell;
-  Arena *context_arena;
-} csv_adt_full;
-
-// typedef struct _csv_adt csv_adt;
-// typedef struct _csv_adt_full csv_adt_full;
+  bool _full_data;
+  Arena *_context_arena;
+} csv_adt;
 
 char ** // ["1", "chat", "csv", "0"]
 read_idx_row(csv_adt *adt, int line);
@@ -61,30 +48,39 @@ item_idx_row_colum(csv_adt *adt, int line, int colum);
 char ** // ["city", "fortal", "maracanau"]
 item_idx_colum(csv_adt *adt, int colum);
 
-csv_adt_full *dump_csv(char *file_path); // read all data to memory
+csv_adt * // read all data to memory
+dump_csv(char *file_path);
 
-csv_adt *init_read_file_path(char *file_name);
+csv_adt * //
+init_read_file_path(char *file_name);
 
-void free_context(csv_adt *adt);
+void //
+free_context(csv_adt *adt);
 
-char *_csv_parser_line(char *buff);
+char * //
+_csv_parser_line(char *buff);
 
-void *_csv_parser_colum(char *buff, int column_num);
+void * //
+_csv_parser_colum(char *buff, int column_num);
 
-void *_csv_parser_line_adt(csv_adt *adt, char *line);
+void * //
+_csv_parser_line_adt(csv_adt *adt, char *line);
 
-void *_csv_parser_colum_adt(csv_adt *adt, char *column_name);
+void * //
+_csv_parser_colum_adt(csv_adt *adt, char *column_name);
 
 #endif // CSVPARSERC_H_
 
 #ifdef CSVPARSERC_IMPLEMENTATION
 
-void *_arena_context_alloc_noshare(csv_adt *adt, size_t size) {
+void * // thread safe std alloc
+_arena_context_alloc_noshare(csv_adt *adt, size_t size) {
   assert(adt->context_arena && "arena not initialized");
   return arena_alloc(adt->context_arena, size);
 }
 
-void *_arena_context_alloc(size_t size) {
+void * // global alloc
+_arena_context_alloc(size_t size) {
   assert(context_arena && "arena not initialized");
   return arena_alloc(context_arena, size);
 }
@@ -108,7 +104,8 @@ item_idx_colum(csv_adt *adt, int colum) {
   assert(colum);
 }
 
-csv_adt_full *dump_csv(char *file_path) { // read all data to memory
+csv_adt * // read all data to memory
+dump_csv(char *file_path) {
   // assert(file_path);
 
   size_t read;
@@ -135,20 +132,31 @@ csv_adt_full *dump_csv(char *file_path) { // read all data to memory
   fclose(fp);
 }
 
-csv_adt *init_read_file_path(char *file_name) { assert(file_name); }
+csv_adt * //
+init_read_file_path(char *file_name) {
+  assert(file_name);
+}
 
-void free_csv_data(csv_adt *adt) { assert(adt); }
+void //
+free_csv_data(csv_adt *adt) {
+  assert(adt);
+}
 
-void *_csv_parser_line_adt(csv_adt *adt, char *line) {
+void * //
+_csv_parser_line_adt(csv_adt *adt, char *line) {
   assert(adt);
   assert(line);
 }
 
-void *_csv_parser_colum_adt(csv_adt *adt, char *column_name) {
+void * //
+_csv_parser_colum_adt(csv_adt *adt, char *column_name) {
   assert(adt);
   assert(column_name);
 }
 
-int read_csv_file_path(char *name_with_path) { assert(name_with_path); }
+int //
+read_csv_file_path(char *name_with_path) {
+  assert(name_with_path);
+}
 
 #endif // CSVPARSERC_IMPLEMENTATION
