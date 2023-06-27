@@ -2,18 +2,16 @@
 #ifndef CSVPARSERC_H_
 #define CSVPARSERC_H_
 
-#include "assert.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #define ARENA_IMPLEMENTATION
 #include "../../resources/arena.h"
 
-#define ORGMODEPARSERC_H_
-
 #ifndef CUSTOM_ALLOC
-#define CUSTOM_ALLOC // thread safe, no shared
+#define CUSTOM_ALLOC
 #define CSV_ALLOC _arena_context_alloc_noshare
 #endif
 
@@ -32,7 +30,8 @@ typedef struct _csv_adt {
   Arena *_context_arena;
 } csv_adt;
 
-void *_arena_context_alloc_noshare(csv_adt* adt, size_t size);
+void * //
+_arena_context_alloc_noshare(csv_adt *adt, size_t size);
 
 char ** // ["1", "chat", "csv", "0"]
 csvc_read_idx_row(csv_adt *adt, int line);
@@ -69,26 +68,26 @@ _arena_context_alloc_noshare(csv_adt *adt, size_t size) {
 }
 
 char ** // ["1", "chat", "csv", "0"]
-read_idx_row(csv_adt *adt, int line) {
+csvc_read_idx_row(csv_adt *adt, int line) {
   assert(adt);
   assert(line);
 }
 
 char * // "1"
-item_idx_row_colum(csv_adt *adt, int line, int colum) {
+csvc_item_idx_row_colum(csv_adt *adt, int line, int colum) {
   assert(adt);
   assert(line);
   assert(colum);
 }
 
 char ** // ["city", "fortal", "maracanau"]
-item_idx_colum(csv_adt *adt, int colum) {
+csvc_item_idx_colum(csv_adt *adt, int colum) {
   assert(adt);
   assert(colum);
 }
 
 csv_adt * // read all data to memory
-dump_csv(char *file_path) {
+csvc_dump_csv(char *file_path) {
   // assert(file_path);
 
   size_t read;
@@ -99,7 +98,7 @@ dump_csv(char *file_path) {
 
   if (fp == NULL) {
     printf("file not open correcly :: %s", file_path);
-    return (csv_adt*)NULL;
+    return (csv_adt *)NULL;
   }
 
   // printf("Hello World\n");
@@ -116,22 +115,27 @@ dump_csv(char *file_path) {
 }
 
 csv_adt * //
-init_read_file_path(char *file_name) {
+csvc_init_read_file_path(char *file_name) {
 
   // csv_adt* adt_new = &(csv_adt)malloc(sizeof(csv_adt));
-
 
   assert(file_name);
 }
 
 void //
-free_csv_data(csv_adt *adt) {
-  assert(adt);
+csvc_free_context(csv_adt *adt) {
+  arena_free(adt->_context_arena);
 }
 
-int //
-read_csv_file_path(char *name_with_path) {
-  assert(name_with_path);
+char * //
+_csvc_parser_line(char *buff) {
+  assert(buff);
+}
+
+void * //
+_csvc_parser_colum(char *buff, int column_num) {
+  assert(buff);
+  assert(column_num);
 }
 
 #endif // CSVPARSERC_IMPLEMENTATION

@@ -13,6 +13,6 @@ main (int argc, char *argv[]) {
     return 127;
   }
 
-  read_csv_file_path(argv[1]);
+  csvc_init_read_file_path(argv[1]);
   return 0;
 }
