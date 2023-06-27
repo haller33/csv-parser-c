@@ -1,7 +1,9 @@
 #define NOBUILD_IMPLEMENTATION
 #include "./include/nobuild.h"
 
-#define CFLAGS "-Wall", "-Wextra", "-std=c99", "-pedantic"
+#define CFLAGS "-Wall", "-Wextra", "-g", "-std=c99", "-pedantic"
+
+#define CLIBS "resources/arena.c"
 
 void build_file(const char *tool) {
   
@@ -11,7 +13,7 @@ void build_file(const char *tool) {
   Cstr tool_path = PATH("src", tool);
   Cstr bin_path = PATH("bin", tool);
 #ifndef _WIN32
-  CMD("cc", CFLAGS, "-o", NOEXT(bin_path), tool_path);
+  CMD("cc", CFLAGS, "-o", NOEXT(bin_path), CLIBS, tool_path);
 #else
   CMD("cl.exe", "/Fe.\\bin\\", tool_path);
 #endif
