@@ -13,61 +13,50 @@
 #define ORGMODEPARSERC_H_
 
 #ifndef CUSTOM_ALLOC
-#define CUSTOM_ALLOC
-// #define CSV_ALLOC _arena_context_alloc // global alloc
-#define CSV_ALLOC _arena_context_alloc_noshare // thread safe, no shared
+#define CUSTOM_ALLOC // thread safe, no shared
+#define CSV_ALLOC _arena_context_alloc_noshare
 #endif
 
-#define MIN_ARENA 1048576 // 2^20
-
-static Arena default_arena = {0};
-static Arena temporary_arena = {0};
-static Arena *context_arena = &default_arena;
-
-void *_arena_context_alloc(size_t size);
+// #define MIN_ARENA 1048576 // 2^20 bytes
 
 #define MAX_HEADER_NAME 80
 #define MAX_NAME_CELL 80
 
 typedef struct _csv_adt {
-  char **columns_names;
-  char **raw_data;
-  int columns_count;
-  int current_count_row;
-  int max_name_cell;
+  char **csv_columns_names;
+  char **csv_raw_data;
+  int csv_current_count_row;
+  int _columns_count;
+  int _max_name_cell;
   bool _full_data;
   Arena *_context_arena;
 } csv_adt;
 
+void *_arena_context_alloc_noshare(csv_adt* adt, size_t size);
+
 char ** // ["1", "chat", "csv", "0"]
-read_idx_row(csv_adt *adt, int line);
+csvc_read_idx_row(csv_adt *adt, int line);
 
 char * // "1"
-item_idx_row_colum(csv_adt *adt, int line, int colum);
+csvc_item_idx_row_colum(csv_adt *adt, int line, int colum);
 
 char ** // ["city", "fortal", "maracanau"]
-item_idx_colum(csv_adt *adt, int colum);
+csvc_item_idx_colum(csv_adt *adt, int colum);
 
 csv_adt * // read all data to memory
-dump_csv(char *file_path);
+csvc_dump_csv(char *file_path);
 
 csv_adt * //
-init_read_file_path(char *file_name);
+csvc_init_read_file_path(char *file_name);
 
 void //
-free_context(csv_adt *adt);
+csvc_free_context(csv_adt *adt);
 
 char * //
-_csv_parser_line(char *buff);
+_csvc_parser_line(char *buff);
 
 void * //
-_csv_parser_colum(char *buff, int column_num);
-
-void * //
-_csv_parser_line_adt(csv_adt *adt, char *line);
-
-void * //
-_csv_parser_colum_adt(csv_adt *adt, char *column_name);
+_csvc_parser_colum(char *buff, int column_num);
 
 #endif // CSVPARSERC_H_
 
@@ -75,14 +64,8 @@ _csv_parser_colum_adt(csv_adt *adt, char *column_name);
 
 void * // thread safe std alloc
 _arena_context_alloc_noshare(csv_adt *adt, size_t size) {
-  assert(adt->context_arena && "arena not initialized");
-  return arena_alloc(adt->context_arena, size);
-}
-
-void * // global alloc
-_arena_context_alloc(size_t size) {
-  assert(context_arena && "arena not initialized");
-  return arena_alloc(context_arena, size);
+  assert(adt->_context_arena && "arena not pass");
+  return arena_alloc(adt->_context_arena, size);
 }
 
 char ** // ["1", "chat", "csv", "0"]
@@ -116,7 +99,7 @@ dump_csv(char *file_path) {
 
   if (fp == NULL) {
     printf("file not open correcly :: %s", file_path);
-    return 1;
+    return (csv_adt*)NULL;
   }
 
   // printf("Hello World\n");
@@ -127,31 +110,23 @@ dump_csv(char *file_path) {
     printf("%s", line);
   }
 
-  int *pti = (int *)CSV_ALLOC(512);
+  // int *pti = (int *)CSV_ALLOC(512);
 
   fclose(fp);
 }
 
 csv_adt * //
 init_read_file_path(char *file_name) {
+
+  // csv_adt* adt_new = &(csv_adt)malloc(sizeof(csv_adt));
+
+
   assert(file_name);
 }
 
 void //
 free_csv_data(csv_adt *adt) {
   assert(adt);
-}
-
-void * //
-_csv_parser_line_adt(csv_adt *adt, char *line) {
-  assert(adt);
-  assert(line);
-}
-
-void * //
-_csv_parser_colum_adt(csv_adt *adt, char *column_name) {
-  assert(adt);
-  assert(column_name);
 }
 
 int //
