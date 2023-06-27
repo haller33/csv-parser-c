@@ -41,9 +41,11 @@ main (int argc, char *argv[]) {
 
   for (int i = 0; i < 100; i++) {
 
-    ;
+    pt[i] = i;
     // print("%d\n", pt[i]);
   }
+
+  arena_summary(&default_arena);
 
   arena_free(&default_arena);
   arena_free(&temporary_arena);
