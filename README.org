@@ -15,13 +15,13 @@ make first && ./first
 just include [[https://github.com/haller33/csv-parser-c/blob/master/src/lib/csv_parser.h][src/lib/csv_parser.h]] on your c/c++ code, then
 
 #+begin_src c
-#include "csv_parser.h"
+#define CSVPARSERC_IMPLEMENTATION
 #+end_src
 
 then define the followed flag
 
 #+begin_src c
-#define CSVPARSERC_IMPLEMENTATION
+#include "csv_parser.h"
 #+end_src
 
 
