@@ -18,7 +18,7 @@ just include [[https://github.com/haller33/csv-parser-c/blob/master/src/lib/csv_
 #define CSVPARSERC_IMPLEMENTATION
 #+end_src
 
-then define the followed flag
+then define the followed, after the flag
 
 #+begin_src c
 #include "csv_parser.h"
