@@ -1,8 +1,8 @@
 * Begin
 
-* OrgModeParser On C
+* CSVParser On C
 
-Header Only Org-mode Parser on C, inspired by stb libraries
+Header Only CSV parser on C, inspired by stb libraries
 
 ** Build
 
@@ -12,32 +12,20 @@ make first && ./first
 
 ** Use
 
-just include [[https://github.com/haller33/orgmodeparser-c/blob/master/src/lib/orgmodeparser.h][src/lib/orgmodeparser.h]] on your c/c++ code, then
+just include [[https://github.com/haller33/csv-parser-c/blob/master/src/lib/csv_parser.h][src/lib/csv_parser.h]] on your c/c++ code, then
 
 #+begin_src c
-#include "orgmodeparser.h"
+#include "csv_parser.h"
 #+end_src
 
 then define the followed flag
 
 #+begin_src c
-#define ORGMODEPARSERC_H_
+#define CSVPARSERC_IMPLEMENTATION
 #+end_src
 
 
-done!, now use the [[https://github.com/haller33/orgmodeparser-c/tree/master/demo][demo]] codes, and [[https://github.com/haller33/orgmodeparser-c/blob/master/src/tester.c][test]] for more usage.
-
 ** resources / references
-
-https://list.orgmode.org/CA+G3_PNj6Pekqv+tWFkwbD778XhW9WSfx+kjJhjSOREpLHUpRQ@mail.gmail.com/
-
-https://orgmode.org/worg/org-syntax.html
-
-https://list.orgmode.org/CA+G3_PNj6Pekqv+tWFkwbD778XhW9WSfx+kjJhjSOREpLHUpRQ@mail.gmail.com/
-
-https://docs.racket-lang.org/brag/#%28part._.The_language%29
-
-https://github.com/tgbugs/laundry/blob/master/laundry/grammar/org.rkt
 
 ** License
 
