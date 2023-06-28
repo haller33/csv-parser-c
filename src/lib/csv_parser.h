@@ -20,7 +20,9 @@
 #define MAX_HEADER_NAME 80
 #define MAX_NAME_CELL 80
 
+#ifndef SEPARATION_CARACTER
 #define SEPARATION_CARACTER ','
+#endif
 
 typedef struct _csv_adt {
   char **csv_columns_names;
@@ -169,9 +171,6 @@ csvc_dump_csv(char *file_path) {
   while ((read = getline(&line_ptr, &len, ctx_adt->_pdp)) != (size_t)-1) {
 
     raw_data[relative_count] = _csvc_parser_line(ctx_adt, line_ptr);
-
-    // printf("Retrieved line of length %zu:\n", line);
-    // printf("%s", line);
 
     relative_count += 1;
   }
