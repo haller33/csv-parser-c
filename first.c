@@ -1,7 +1,7 @@
 #define NOBUILD_IMPLEMENTATION
 #include "./include/nobuild.h"
 
-#define CFLAGS "-Wall", "-Wextra", "-g", "-std=c99", "-pedantic"
+#define CFLAGS "-Wall", "-O0", "-Wextra", "-g", "-std=c99", "-pedantic"
 
 #define CLIBS "resources/arena.c"
 

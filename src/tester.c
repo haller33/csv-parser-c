@@ -13,6 +13,12 @@ main (int argc, char *argv[]) {
     return 127;
   }
 
-  csvc_init_read_file_path(argv[1]);
+  csv_adt *ctx = csvc_init_read_file_path(argv[1]);
+
+  char str[] = "some,text,data";
+  char** arr_vet_chr = _csvc_parser_line(ctx, str);
+
+  csvc_free_context(ctx);
+
   return 0;
 }
