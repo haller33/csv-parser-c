@@ -27,8 +27,14 @@ main (int argc, char *argv[]) {
 
   csvc_free_context(ctx);
 
-
   csv_adt *ctx_neo = csvc_dump_csv(argv[1]);
+
+  for(size_t i = 0; i < ctx_neo->_rows_count; i++) {
+    for(int j = 0; j < (int)ctx_neo->_columns_count; j++) {
+      printf("%s ",ctx_neo->csv_raw_data[i][j]);
+    }
+    puts("\n");
+  }
 
   csvc_free_context(ctx_neo);
 

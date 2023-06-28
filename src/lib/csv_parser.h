@@ -27,6 +27,7 @@ typedef struct _csv_adt {
   char ***csv_raw_data;
   size_t csv_current_count_row;
   size_t _columns_count;
+  size_t _rows_count;
   size_t _max_name_cell;
   bool _full_data;
   FILE *_pdp;
@@ -146,6 +147,8 @@ csvc_dump_csv(char *file_path) {
 
   csv_adt *ctx_adt = csvc_init_read_file_path(file_path);
 
+  ctx_adt->_rows_count = file_lines_number;
+
   char ***raw_data =
       (char ***)CSV_ALLOC(ctx_adt, sizeof(char ***) * file_lines_number);
 
@@ -163,7 +166,7 @@ csvc_dump_csv(char *file_path) {
 
   size_t relative_count = 0;
 
-  while ((read = getline(&line_ptr, &len, ctx_adt->_pdp)) != -1) {
+  while ((read = getline(&line_ptr, &len, ctx_adt->_pdp)) != (size_t)-1) {
 
     raw_data[relative_count] = _csvc_parser_line(ctx_adt, line_ptr);
 
@@ -199,6 +202,7 @@ csvc_init_read_file_path(char *file_name_path) {
   memset(_arena_new, 0, sizeof(Arena));
 
   _adt_new->csv_current_count_row = 0;
+  _adt_new->_rows_count = 0;
   _adt_new->csv_raw_data = NULL;
 
   _adt_new->_full_data = false;
