@@ -142,7 +142,7 @@ csvc_item_idx_colum(csv_adt *adt, size_t colum) {
 
 size_t //
 _csvc_count_lines(char *file_name_path) {
-  assert (file_name_path);
+  assert(file_name_path);
 
   FILE *file;
   char ch;
@@ -252,7 +252,7 @@ csvc_init_read_file_path(char *file_name_path) {
 
 void //
 csvc_close_file_path(csv_adt *adt) {
-  assert (adt);
+  assert(adt);
   fclose(adt->_pdp);
 }
 
