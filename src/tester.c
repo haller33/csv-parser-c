@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+// #define ARENA_DEFAULT_CAPACITY (2840 * 1000)
 #define CSVPARSERC_IMPLEMENTATION
 #include "lib/csv_parser.h"
 
@@ -33,7 +34,7 @@ main (int argc, char *argv[]) {
     for(int j = 0; j < (int)ctx_neo->_columns_count; j++) {
       printf("%s ",ctx_neo->csv_raw_data[i][j]);
     }
-    puts("\n");
+    printf("\n");
   }
 
   csvc_free_context(ctx_neo);

@@ -40,13 +40,13 @@ void * //
 _arena_context_alloc_noshare(csv_adt *adt, size_t size);
 
 char ** // ["1", "chat", "csv", "0"]
-csvc_read_idx_row(csv_adt *adt, int line);
+csvc_read_idx_row(csv_adt *adt, size_t line);
 
 char * // "1"
-csvc_item_idx_row_colum(csv_adt *adt, int line, int colum);
+csvc_item_idx_row_colum(csv_adt *adt, size_t line, size_t colum);
 
 char ** // ["city", "fortal", "maracanau"]
-csvc_item_idx_colum(csv_adt *adt, int colum);
+csvc_item_idx_colum(csv_adt *adt, size_t colum);
 
 csv_adt * // read all data to memory
 csvc_dump_csv(char *file_path);
@@ -89,22 +89,53 @@ _arena_context_alloc_noshare(csv_adt *adt, size_t size) {
 }
 
 char ** // ["1", "chat", "csv", "0"]
-csvc_read_idx_row(csv_adt *adt, int line) {
+csvc_read_idx_row(csv_adt *adt, size_t line) {
   assert(adt);
   assert(line);
+  assert(line < adt->_rows_count);
+
+  if (adt->_full_data) {
+
+    return adt->csv_raw_data[line];
+  }
+
+  return (char **)NULL;
 }
 
 char * // "1"
-csvc_item_idx_row_colum(csv_adt *adt, int line, int colum) {
+csvc_item_idx_row_colum(csv_adt *adt, size_t line, size_t colum) {
   assert(adt);
   assert(line);
   assert(colum);
+  assert(colum < adt->_columns_count);
+  assert(line < adt->_rows_count);
+
+  if (adt->_full_data) {
+
+    return adt->csv_raw_data[line][colum];
+  }
+
+  return (char *)NULL;
 }
 
 char ** // ["city", "fortal", "maracanau"]
-csvc_item_idx_colum(csv_adt *adt, int colum) {
+csvc_item_idx_colum(csv_adt *adt, size_t colum) {
   assert(adt);
   assert(colum);
+  assert(colum < adt->_columns_count);
+
+  if (adt->_full_data) {
+
+    char **raw_colum = _csvc_alloc_chr_array(adt, adt->_rows_count);
+
+    for (size_t i = 0; i < adt->_rows_count; i++) {
+      raw_colum[i] = adt->csv_raw_data[i][colum];
+    }
+
+    return raw_colum;
+  }
+
+  return (char **)NULL;
 }
 
 size_t //
@@ -154,7 +185,7 @@ csvc_dump_csv(char *file_path) {
   char ***raw_data =
       (char ***)CSV_ALLOC(ctx_adt, sizeof(char ***) * file_lines_number);
 
-  getline(&line_ptr, &len, ctx_adt->_pdp);
+  read = getline(&line_ptr, &len, ctx_adt->_pdp);
 
   ctx_adt->csv_columns_names = _csvc_parser_line(ctx_adt, line_ptr);
 
@@ -281,6 +312,10 @@ _csvc_alloc_chr_array(csv_adt *adt, size_t arr_size) {
 char ** //
 _csvc_parser_line(csv_adt *adt, char *buff) {
 
+  if (strcmp(buff, "")){
+    return (char**)NULL;
+  }
+
   char **new_str = NULL;
 
   const char target = SEPARATION_CARACTER;
@@ -327,10 +362,5 @@ _csvc_count_columns(char **buff) {
   return count - 1;
 }
 
-void * //
-_csvc_parser_colum(char *buff, int column_num) {
-  assert(buff);
-  assert(column_num);
-}
 
 #endif // CSVPARSERC_IMPLEMENTATION

@@ -19,7 +19,9 @@ struct Region {
 
 Region *region_create(size_t capacity);
 
+#ifndef ARENA_DEFAULT_CAPACITY
 #define ARENA_DEFAULT_CAPACITY (640 * 1000)
+#endif
 
 typedef struct {
     Region *first;
