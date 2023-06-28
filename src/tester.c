@@ -3,6 +3,7 @@
 #include <string.h>
 
 // #define ARENA_DEFAULT_CAPACITY (2840 * 1000)
+// #define JUST_MALLOC false
 #define CSVPARSERC_IMPLEMENTATION
 #include "lib/csv_parser.h"
 

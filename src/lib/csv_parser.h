@@ -13,9 +13,11 @@
 #ifndef CUSTOM_ALLOC
 #define CUSTOM_ALLOC
 #define CSV_ALLOC _arena_context_alloc_noshare
-#endif
+#endif // CUSTOM_ALLOC
 
-// #define MIN_ARENA 1048576 // 2^20 bytes
+#ifndef JUST_MALLOC
+#define JUST_MALLOC false
+#endif // JUST_MALLOC
 
 #define MAX_HEADER_NAME 80
 #define MAX_NAME_CELL 80
@@ -140,6 +142,8 @@ csvc_item_idx_colum(csv_adt *adt, size_t colum) {
 
 size_t //
 _csvc_count_lines(char *file_name_path) {
+  assert (file_name_path);
+
   FILE *file;
   char ch;
   size_t count = 0;
@@ -168,7 +172,7 @@ _csvc_count_lines(char *file_name_path) {
 
 csv_adt * // read all data to memory
 csvc_dump_csv(char *file_path) {
-  // assert(file_path);
+  assert(file_path);
 
   size_t read;
   char *line_ptr = NULL;
@@ -248,12 +252,13 @@ csvc_init_read_file_path(char *file_name_path) {
 
 void //
 csvc_close_file_path(csv_adt *adt) {
-
+  assert (adt);
   fclose(adt->_pdp);
 }
 
 void //
 csvc_free_context(csv_adt *adt) {
+  assert(adt);
 
   arena_free(adt->_context_arena);
   free(adt->_context_arena);
@@ -295,13 +300,19 @@ _csvc_alloc_chr_array(csv_adt *adt, size_t arr_size) {
 
   char **ret_char_arr = NULL;
 
-  // ret_char_arr = (char **)malloc(sizeof(char **) * arr_size);
+#if JUST_MALLOC
+  ret_char_arr = (char **)malloc(sizeof(char **) * arr_size);
+#else
   ret_char_arr = (char **)CSV_ALLOC(adt, sizeof(char **) * arr_size);
+#endif
 
   for (size_t i = 0; i < arr_size; i++) {
 
+#if JUST_MALLOC
+    (ret_char_arr)[i] = (char *)malloc(sizeof(char) * MAX_NAME_CELL);
+#else
     (ret_char_arr)[i] = (char *)CSV_ALLOC(adt, sizeof(char) * MAX_NAME_CELL);
-    // (ret_char_arr)[i] = (char *)malloc(sizeof(char) * MAX_NAME_CELL);
+#endif
 
     memset(&(ret_char_arr)[i][0], 0, sizeof(char) * MAX_NAME_CELL);
   }
@@ -312,9 +323,8 @@ _csvc_alloc_chr_array(csv_adt *adt, size_t arr_size) {
 char ** //
 _csvc_parser_line(csv_adt *adt, char *buff) {
 
-  if (strcmp(buff, "")){
-    return (char**)NULL;
-  }
+  assert(adt);
+  assert(buff);
 
   char **new_str = NULL;
 
@@ -352,6 +362,8 @@ _csvc_parser_line(csv_adt *adt, char *buff) {
 size_t //
 _csvc_count_columns(char **buff) {
 
+  assert(buff);
+
   size_t count = 0;
   while (buff[count] != NULL) {
     count += 1;
@@ -361,6 +373,5 @@ _csvc_count_columns(char **buff) {
 
   return count - 1;
 }
-
 
 #endif // CSVPARSERC_IMPLEMENTATION
