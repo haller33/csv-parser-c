@@ -9,7 +9,7 @@ int
 main (int argc, char *argv[]) {
 
   if (argc < 2) {
-    printf("no file specify\ntry out %s <file_name>.csv", argv[0]);
+    printf("no file specify\ntry out %s with <file_name>.csv", argv[0]);
     return 127;
   }
 
@@ -17,6 +17,10 @@ main (int argc, char *argv[]) {
 
   char str[] = "some,text,data";
   char** arr_vet_chr = _csvc_parser_line(ctx, str);
+
+  for(int i = 0; i < 3; i++) {
+    printf("%s\n", arr_vet_chr[i]);
+  }
 
   csvc_free_context(ctx);
 

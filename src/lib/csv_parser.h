@@ -24,7 +24,7 @@
 
 typedef struct _csv_adt {
   char **csv_columns_names;
-  char **csv_raw_data;
+  char ***csv_raw_data;
   int csv_current_count_row;
   int _columns_count;
   int _max_name_cell;
@@ -52,6 +52,9 @@ csv_adt * //
 csvc_init_read_file_path(char *file_name);
 
 void //
+csvc_close_file_path(csv_adt *adt);
+
+void //
 csvc_free_context(csv_adt *adt);
 
 char ** //
@@ -68,7 +71,6 @@ _csvc_get_idx_chr(char *buff, char chr);
 
 size_t //
 _csvc_count_chr_on_str(char *str, char chr);
-
 #endif // CSVPARSERC_H_
 
 #ifdef CSVPARSERC_IMPLEMENTATION
@@ -118,6 +120,7 @@ csvc_dump_csv(char *file_path) {
 
   while ((read = getline(&line, &len, fp)) != -1) {
     printf("Retrieved line of length %zu:\n", read);
+
     printf("%s", line);
   }
 
@@ -146,6 +149,12 @@ csvc_init_read_file_path(char *file_name_path) {
 }
 
 void //
+csvc_close_file_path(csv_adt *adt) {
+
+  fclose(adt->_pdp);
+}
+
+void //
 csvc_free_context(csv_adt *adt) {
 
   arena_free(adt->_context_arena);
@@ -157,13 +166,28 @@ csvc_free_context(csv_adt *adt) {
 }
 
 size_t //
-_csvc_get_idx_chr(char *buff, char chr) {
+_csvc_get_idx_chr (char* string, char c) {
 
+  char *str = strchr(string, c);
+
+  if (str == NULL) {
+    return strlen(string);
+  }
+
+  return (size_t)(str - string);
+}
+
+size_t //
+_csvc_count_chr_on_str(char *str, char chr) {
+
+  const char *p = str;
   size_t count = 0;
 
-  while ((buff++[0] == chr) && (&buff[0] != NULL)) {
-    count += 1;
-  }
+  do {
+    if (*p == chr) {
+      count++;
+    }
+  } while (*(p++));
 
   return count;
 }
@@ -173,13 +197,13 @@ _csvc_alloc_chr_array(csv_adt *adt, size_t arr_size) {
 
   char **ret_char_arr = NULL;
 
-  // ret_char_arr = (char**) malloc ( sizeof ( char** ) * arr_size );
+  // ret_char_arr = (char **)malloc(sizeof(char **) * arr_size);
   ret_char_arr = (char **)CSV_ALLOC(adt, sizeof(char **) * arr_size);
 
   for (size_t i = 0; i < arr_size; i++) {
 
     (ret_char_arr)[i] = (char *)CSV_ALLOC(adt, sizeof(char) * MAX_NAME_CELL);
-    // (ret_char_arr)[i] = (char*) malloc ( sizeof ( char ) * MAX_NAME_CELL );
+    // (ret_char_arr)[i] = (char *)malloc(sizeof(char) * MAX_NAME_CELL);
 
     memset(&(ret_char_arr)[i][0], 0, sizeof(char) * MAX_NAME_CELL);
   }
@@ -187,28 +211,16 @@ _csvc_alloc_chr_array(csv_adt *adt, size_t arr_size) {
   return ret_char_arr;
 }
 
-size_t //
-_csvc_count_chr_on_str(char *str, char chr) {
-
-  size_t count = 0;
-
-  while (strcmp(str++, "") && (str++ != NULL)) {
-    if (str[0] == chr) {
-      count += 1;
-    }
-  }
-
-  return count;
-}
-
 char ** //
 _csvc_parser_line(csv_adt *adt, char *buff) {
 
   char **new_str = NULL;
 
-  char target = SEPARATION_CARACTER;
+  const char target = SEPARATION_CARACTER;
 
   size_t number_of_columns = _csvc_count_chr_on_str(buff, target);
+
+  number_of_columns += 1; // for the default 0 count, and last column
 
   new_str = _csvc_alloc_chr_array(adt, number_of_columns);
 
@@ -217,18 +229,18 @@ _csvc_parser_line(csv_adt *adt, char *buff) {
   size_t current_idx = 0;
   size_t relative_count = 0;
 
-  while (current_idx = _csvc_get_idx_chr(&buff[idx], target)) {
+  while ((current_idx = _csvc_get_idx_chr(&buff[idx], target)) && (relative_count < number_of_columns)) {
 
-    if ((current_idx - idx) > MAX_NAME_CELL) {
+    if (current_idx > MAX_NAME_CELL) {
 
-      strncpy(&new_str[relative_count], &buff[idx], MAX_NAME_CELL);
+      strncpy(new_str[relative_count], &buff[idx], MAX_NAME_CELL);
     } else {
 
-      strncpy(&new_str[relative_count], &buff[idx], current_idx - idx);
+      strncpy(new_str[relative_count], &buff[idx], current_idx);
     }
 
     relative_count += 1;
-    idx = current_idx;
+    idx = idx + current_idx + 1;
   }
 
   return new_str;
