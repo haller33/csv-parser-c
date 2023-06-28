@@ -2,7 +2,7 @@
 
 * CSVParser On C
 
-Header Only CSV parser on C, inspired by stb libraries
+Header Only CSV parser on C, inspired by [[https://github.com/nothings/stb][stb]] libraries
 
 ** Build
 
