@@ -1,6 +1,6 @@
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#include <assert.h>
 
 #define ARENA_IMPLEMENTATION
 #include "../resources/arena.h"
@@ -13,15 +13,14 @@ static Arena default_arena = {0};
 static Arena temporary_arena = {0};
 static Arena *context_arena = &default_arena;
 
-void*
-context_alloc(size_t size)
-{
-    assert(context_arena);
-    return arena_alloc(context_arena, size);
+void * //
+context_alloc(size_t size) {
+  assert(context_arena);
+  return arena_alloc(context_arena, size);
 }
 
-int
-main (int argc, char *argv[]) {
+int //
+main(int argc, char *argv[]) {
 
   if (argc < 2) {
     puts("no file specify");
@@ -29,15 +28,15 @@ main (int argc, char *argv[]) {
   }
 
   FILE *fp = fopen(argv[1], "ro");
-  
+
   if (fp == NULL) {
-    printf ("file not open correcly :: %s", argv[1]);
+    printf("file not open correcly :: %s", argv[1]);
     return 1;
   }
-  
+
   // printf("Hello World");
 
-  int* pt = (int*) context_alloc (512);
+  int *pt = (int *)context_alloc(512);
 
   for (int i = 0; i < 100; i++) {
 
@@ -50,6 +49,6 @@ main (int argc, char *argv[]) {
   arena_free(&default_arena);
   arena_free(&temporary_arena);
 
-  fclose ( fp );
+  fclose(fp);
   return 0;
 }
