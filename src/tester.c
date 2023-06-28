@@ -22,7 +22,16 @@ main (int argc, char *argv[]) {
     printf("%s\n", arr_vet_chr[i]);
   }
 
+  size_t columns_c = _csvc_count_columns(arr_vet_chr);
+  printf("%d\n", (int)columns_c);
+
   csvc_free_context(ctx);
+
+
+  csv_adt *ctx_neo = csvc_dump_csv(argv[1]);
+
+  csvc_free_context(ctx_neo);
+
 
   return 0;
 }

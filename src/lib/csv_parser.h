@@ -25,9 +25,9 @@
 typedef struct _csv_adt {
   char **csv_columns_names;
   char ***csv_raw_data;
-  int csv_current_count_row;
-  int _columns_count;
-  int _max_name_cell;
+  size_t csv_current_count_row;
+  size_t _columns_count;
+  size_t _max_name_cell;
   bool _full_data;
   FILE *_pdp;
   Arena *_context_arena;
@@ -71,6 +71,10 @@ _csvc_get_idx_chr(char *buff, char chr);
 
 size_t //
 _csvc_count_chr_on_str(char *str, char chr);
+
+size_t //
+_csvc_count_columns(char **buff);
+
 #endif // CSVPARSERC_H_
 
 #ifdef CSVPARSERC_IMPLEMENTATION
@@ -100,33 +104,80 @@ csvc_item_idx_colum(csv_adt *adt, int colum) {
   assert(colum);
 }
 
+size_t //
+_csvc_count_lines(char *file_name_path) {
+  FILE *file;
+  char ch;
+  size_t count = 0;
+
+  // Open the file in read mode
+  file = fopen(file_name_path, "ro");
+
+  // Check if the file exists
+  if (file == NULL) {
+    printf("File not found.\n");
+    return 0;
+  }
+
+  // Count the lines
+  while ((ch = fgetc(file)) != EOF) {
+    if (ch == '\n') {
+      count++;
+    }
+  }
+
+  // Close the file
+  fclose(file);
+
+  return count;
+}
+
 csv_adt * // read all data to memory
 csvc_dump_csv(char *file_path) {
   // assert(file_path);
 
   size_t read;
-  char *line = NULL;
+  char *line_ptr = NULL;
   size_t len = 0;
 
-  FILE *fp = fopen(file_path, "ro");
+  size_t file_lines_number = _csvc_count_lines(file_path);
 
-  if (fp == NULL) {
-    printf("file not open correcly :: %s", file_path);
-    return (csv_adt *)NULL;
-  }
+  file_lines_number -= 1; // for header file
+
+  csv_adt *ctx_adt = csvc_init_read_file_path(file_path);
+
+  char ***raw_data =
+      (char ***)CSV_ALLOC(ctx_adt, sizeof(char ***) * file_lines_number);
+
+  getline(&line_ptr, &len, ctx_adt->_pdp);
+
+  ctx_adt->csv_columns_names = _csvc_parser_line(ctx_adt, line_ptr);
+
+  const size_t columns_count = _csvc_count_columns(ctx_adt->csv_columns_names);
+
+  ctx_adt->_columns_count = columns_count;
 
   // printf("Hello World\n");
-  //
 
-  while ((read = getline(&line, &len, fp)) != -1) {
-    printf("Retrieved line of length %zu:\n", read);
+  ctx_adt->_full_data = true;
 
-    printf("%s", line);
+  size_t relative_count = 0;
+
+  while ((read = getline(&line_ptr, &len, ctx_adt->_pdp)) != -1) {
+
+    raw_data[relative_count] = _csvc_parser_line(ctx_adt, line_ptr);
+
+    // printf("Retrieved line of length %zu:\n", line);
+    // printf("%s", line);
+
+    relative_count += 1;
   }
 
-  // int *pti = (int *)CSV_ALLOC(512);
+  free(line_ptr);
 
-  fclose(fp);
+  ctx_adt->csv_raw_data = raw_data;
+
+  return ctx_adt;
 }
 
 csv_adt * //
@@ -136,10 +187,23 @@ csvc_init_read_file_path(char *file_name_path) {
 
   FILE *fp = fopen(file_name_path, "ro");
 
+  if (fp == NULL) {
+    printf("file not open correcly :: %s", file_name_path);
+    assert(fp);
+    return (csv_adt *)NULL;
+  }
+
   csv_adt *_adt_new = (csv_adt *)malloc(sizeof(csv_adt));
   Arena *_arena_new = (Arena *)malloc(sizeof(Arena));
 
   memset(_arena_new, 0, sizeof(Arena));
+
+  _adt_new->csv_current_count_row = 0;
+  _adt_new->csv_raw_data = NULL;
+
+  _adt_new->_full_data = false;
+  _adt_new->_max_name_cell = MAX_NAME_CELL;
+  _adt_new->_columns_count = 0;
 
   _adt_new->_pdp = fp;
 
@@ -166,7 +230,7 @@ csvc_free_context(csv_adt *adt) {
 }
 
 size_t //
-_csvc_get_idx_chr (char* string, char c) {
+_csvc_get_idx_chr(char *string, char c) {
 
   char *str = strchr(string, c);
 
@@ -229,7 +293,8 @@ _csvc_parser_line(csv_adt *adt, char *buff) {
   size_t current_idx = 0;
   size_t relative_count = 0;
 
-  while ((current_idx = _csvc_get_idx_chr(&buff[idx], target)) && (relative_count < number_of_columns)) {
+  while ((current_idx = _csvc_get_idx_chr(&buff[idx], target)) &&
+         (relative_count < number_of_columns)) {
 
     if (current_idx > MAX_NAME_CELL) {
 
@@ -244,6 +309,19 @@ _csvc_parser_line(csv_adt *adt, char *buff) {
   }
 
   return new_str;
+}
+
+size_t //
+_csvc_count_columns(char **buff) {
+
+  size_t count = 0;
+  while (buff[count] != NULL) {
+    count += 1;
+  }
+  if (count == 0)
+    return 0;
+
+  return count - 1;
 }
 
 void * //
