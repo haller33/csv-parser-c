@@ -27,6 +27,15 @@ then define the followed, after the flag
 
 ** resources / references
 
+*** build system 
+[[nobuild.h][https://github.com/tsoding/nobuild]]
+
+*** Arenas / Memory safety
+[[arena.h][https://github.com/tsoding/bm/blob/master/common/arena.c]]
+
+**** bm (source of arenas)
+[[bm][https://github.com/tsoding/bm]]
+
 ** License
 
 MIT
