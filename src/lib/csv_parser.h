@@ -50,6 +50,7 @@ typedef struct _csv_adt {
   size_t _max_name_cell;
 
   bool _full_data;
+  bool _interation_is_on;
   FILE *_pdp;
 
   Arena *_context_arena;
@@ -61,6 +62,9 @@ _arena_context_alloc_noshare(csv_adt *adt, size_t size);
 bool //
 csvc_interate_increase_file(csv_adt *adt);
 
+char * //
+csvc_current_cell_by_index_of_column(csv_adt *adt, size_t idx);
+
 char ** //
 csvc_current_line(csv_adt *adt);
 
@@ -69,12 +73,6 @@ csvc_current_line_number(csv_adt *adt);
 
 char * //
 csvc_stringfy_arr_char(csv_adt *adt, char **chr_arr);
-
-size_t // get index of respective column name
-csvc_idx_of_column_by_name(csv_adt *adt, char **chr_arr, char *name_column);
-
-char * // get cell from respective column name
-csvc_cell_from_column_by_name(csv_adt *adt, char **chr_arr, char *name_column);
 
 char ** // ["1", "chat", "csv", "0"]
 csvc_read_idx_row(csv_adt *adt, size_t line);
@@ -138,119 +136,38 @@ csvc_interate_increase_file(csv_adt *adt) {
   size_t read = 0;
   size_t len = 0;
 
+  adt->_interation_is_on = true;
+
   read = getline(&adt->csv_current_line_buff, &len, adt->_pdp);
 
   if (read != (size_t)-1) {
     return true;
   } else {
     adt->_rows_count = adt->csv_current_count_row += 1;
+    adt->_interation_is_on = false;
+
     return false;
   }
 
   return false;
 }
 
-size_t // get cell from respective column name, index, not safer
-csvc_idx_of_column_by_name(csv_adt *adt, char **chr_arr, char *name_column) {
+bool
+csvc_is_interating(csv_adt *adt) {
   assert(adt);
-  assert(chr_arr);
-  assert(name_column);
 
-  size_t relative_count = 0;
-  size_t num_columns = _csvc_count_columns(chr_arr);
-
-  for (size_t i = 0; i < num_columns; i++) {
-
-    if (strcmp(chr_arr[i], name_column) == 0) {
-      break;
-    }
-
-    relative_count += 1;
-  }
-
-  if (relative_count > num_columns){
-    return num_columns;
-  }
-
-  return relative_count;
-}
-
-char * // get cell from respective column name, index
-csvc_cell_from_column_by_name(csv_adt *adt, char **chr_arr, char *name_column) {
-  assert(adt);
-  assert(chr_arr);
-  assert(name_column);
-
-  size_t relative_count = csvc_idx_of_column_by_name(adt, chr_arr, name_column);
-
-  if (chr_arr[relative_count] == NULL) {
-    return (char*)NULL;
-  }
-
-  return chr_arr[relative_count];
-}
-char * //
-_csvc_ltrim(char *s)
-{
-  assert(s);
-  while(isspace(*s)) {
-    s++;
-  }
-  return s;
+  return adt->_interation_is_on;
 }
 
 char * //
-_csvc_rtrim(char *s)
-{
-  assert(s);
-  char* back = s + strlen(s);
-  while(isspace(*--back));
-  *(back+1) = '\0';
-  return s;
-}
-
-char * //
-_csvc_trim(char *s)
-{
-  assert(s);
-  return _csvc_rtrim(_csvc_ltrim(s));
-}
-
-char **
-_csvc_trim_arr_chr(csv_adt *adt, char **arr_str_chr) {
+csvc_current_cell_by_index_of_column(csv_adt *adt, size_t idx) {
+  // 'idx' can be zero index;
   assert(adt);
-  assert(arr_str_chr);
 
-  size_t columns_count = _csvc_count_columns(arr_str_chr);
-  char **arr_new_str = _csvc_alloc_chr_array(adt, columns_count);
+  char **current_item_line = csvc_current_line(adt);
 
-  /// for better searching, on tables.
-  //  trim the names.
-  for(size_t i = 0; i < columns_count; i++){
-    char *tmp_chr = NULL;
-    tmp_chr = _csvc_alloc_chr_array(adt, 1)[0];
-    strcpy(tmp_chr, arr_str_chr[i]);
-
-    char *tmp_chr_str = _csvc_trim(tmp_chr);
-    arr_new_str[i] = tmp_chr_str;
-  }
-
-  return arr_new_str;
+  return current_item_line[idx];
 }
-
-char * //
-csvc_current_line_by_column_name(csv_adt *adt, char *column_name) {
-  assert(adt);
-  assert(column_name);
-
-  char *trim_str = _csvc_trim(column_name);
-
-  char **line_current = csvc_current_line(adt);
-  char *cell = csvc_cell_from_column_by_name(adt, line_current, trim_str);
-
-  return cell;
-}
-
 
 char ** //
 csvc_current_line(csv_adt *adt) {
@@ -267,9 +184,7 @@ csvc_current_line(csv_adt *adt) {
 
     adt->_columns_count = _csvc_count_columns(buff_chr_arr);
 
-    char **arr_new_str = _csvc_trim_arr_chr(adt, buff_chr_arr);
-
-    adt->csv_columns_names = arr_new_str;
+    adt->csv_columns_names = buff_chr_arr;
   }
   adt->csv_current_count_row += 1;
 
@@ -403,6 +318,10 @@ csv_adt * //
 csvc_dump_full_csv_to_memory(csv_adt *adt) {
   assert(adt);
 
+  if (adt->_interation_is_on) {
+    return (csv_adt*) NULL;
+  }
+
   size_t read;
   char *line_ptr = NULL;
   size_t len = 0;
@@ -461,6 +380,7 @@ csvc_init_read_file_path(char *file_name_path) {
   _adt_new->_rows_count = 0;
   _adt_new->csv_raw_data = NULL;
 
+  _adt_new->_interation_is_on = false;
   _adt_new->_full_data = false;
   _adt_new->_max_name_cell = MAX_NAME_CELL;
   _adt_new->_columns_count = 0;
