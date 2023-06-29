@@ -65,9 +65,9 @@ main(int argc, char *argv[]) {
 
       size_t num_line = csvc_current_line_number(ctx_two);
 
-      size_t item = atoi(current_arr[1]) / num_line ;
+      double item = (double)atoi(current_arr[1]) / (double)num_line;
 
-      printf("second column %d\n", (int)item);
+      printf("second column %f\n", (float)item);
     } else {
       /// you cannot call the same interator at the same time
       //  without refreshing interate_increase_file
