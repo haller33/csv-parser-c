@@ -34,10 +34,12 @@ main(int argc, char *argv[]) {
   csv_adt *ctx_neo = csvc_init_read_file_path(argv[1]);
 
   while (csvc_interate_increase_file(ctx_neo)) {
-    char **current = csvc_current_line(ctx_neo);
-    for(int j = 0; j < (int)ctx_neo->_columns_count; j++) {
-      printf("%s ",current[j]);
-    }
+    char **current_arr = csvc_current_line(ctx_neo);
+
+    char *str = csvc_stringfy_arr_char(ctx_neo, current_arr);
+
+    printf("%s\n", str);
+
   }
 
   csvc_free_context(ctx_neo);

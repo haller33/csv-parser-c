@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-// #include <stddef.h>
 
 #define ARENA_IMPLEMENTATION
 #include "../../resources/arena.h"
@@ -18,21 +17,24 @@
 
 #ifndef CUSTOM_MALLOC_C
 #define CUSTOM_MALLOC_C malloc
-#endif
+#endif // CUSTOM_MALLOC_C
 
 #ifndef CUSTOM_FREE_MALLOC_C
 #define CUSTOM_FREE_MALLOC_C free
-#endif
+#endif // CUSTOM_FREE_MALLOC_C
 
 #ifndef JUST_MALLOC
 #define JUST_MALLOC false
 #endif // JUST_MALLOC
 
+#ifndef MAX_NAMES
 #define MAX_HEADER_NAME 80
 #define MAX_NAME_CELL 80
+#endif // MAX_NAMES
 
 #ifndef SEPARATION_CARACTER
 #define SEPARATION_CARACTER ','
+#define SPACE_CARACTER " "
 #endif
 
 typedef struct _csv_adt {
@@ -66,9 +68,6 @@ csvc_current_line_number(csv_adt *adt);
 char * //
 csvc_stringfy_arr_char(csv_adt *adt, char **chr_arr);
 
-char * //
-csvc_stringfy_current_arr_char(csv_adt *adt);
-
 char * // get cell from respective column name
 csvc_cell_from_column_by_name(csv_adt *adt, char **name_column);
 
@@ -98,9 +97,6 @@ _csvc_interate_over_item_now_cleanup(csv_adt *adt);
 
 char ** //
 _csvc_parser_line(csv_adt *adt, char *buff);
-
-void * //
-_csvc_parser_colum(char *buff, int column_num);
 
 char ** //
 _csvc_alloc_chr_array(csv_adt *adt, size_t arr_size);
@@ -161,38 +157,19 @@ csvc_current_line(csv_adt *adt) {
   assert(adt->_pdp);
   assert(adt->csv_current_line_buff);
 
-  char **buff = _csvc_parser_line(adt, adt->csv_current_line_buff);
-
-  _csvc_interate_over_item_now_cleanup(adt);
-
-  return buff;
-}
-
-char * //
-csvc_stringfy_current_arr_char(csv_adt *adt) {
-  assert(adt);
-
-  _csvc_interate_over_item_now_cleanup(adt);
-
-  return adt->csv_current_line_buff;
-}
-
-void //
-_csvc_interate_over_item_now_cleanup(csv_adt *adt) {
-  assert(adt);
-
-  if (adt->csv_current_count_row == 0) {
-    char **buff = _csvc_parser_line(adt, adt->csv_current_line_buff);
-
-    adt->_columns_count = _csvc_count_columns(buff);
-    adt->csv_columns_names = buff;
-  }
-  adt->csv_current_count_row += 1;
-
+  char **buff_chr_arr = _csvc_parser_line(adt, adt->csv_current_line_buff);
 
   CUSTOM_FREE_MALLOC_C(adt->csv_current_line_buff);
   adt->csv_current_line_buff = NULL;
 
+  if (adt->csv_current_count_row == 0) {
+
+    adt->_columns_count = _csvc_count_columns(buff_chr_arr);
+    adt->csv_columns_names = buff_chr_arr;
+  }
+  adt->csv_current_count_row += 1;
+
+  return buff_chr_arr;
 }
 
 char * //
@@ -200,9 +177,24 @@ csvc_stringfy_arr_char(csv_adt *adt, char **chr_arr) {
   assert(adt);
   assert(chr_arr);
 
-  // TODO
+  char *caracter_space = SPACE_CARACTER;
+  size_t columns_size_digit = _csvc_count_columns(chr_arr);
 
-  return (char *)NULL;
+  char *new_str_chr =
+      (char *)CSV_ALLOC(adt, sizeof(char) * columns_size_digit * MAX_NAME_CELL +
+                                 columns_size_digit + 1);
+
+  int relative_counter = 0;
+  for (size_t i = 0; i < columns_size_digit; i++) {
+    int size_str_chr = strlen(chr_arr[i]);
+
+    strncpy(&new_str_chr[relative_counter], chr_arr[i], size_str_chr);
+    strncpy(&new_str_chr[relative_counter + size_str_chr], caracter_space, 1);
+
+    relative_counter = relative_counter + size_str_chr + 1;
+  }
+
+  return new_str_chr;
 }
 
 size_t //
