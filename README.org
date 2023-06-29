@@ -2,7 +2,7 @@
 
 * CSVParser On C
 
-Header Only CSV parser on C, inspired by stb libraries
+Header Only CSV parser on C, inspired by [[https://github.com/nothings/stb][stb]] libraries
 
 ** Build
 
@@ -26,6 +26,15 @@ then define the followed, after the flag
 
 
 ** resources / references
+
+*** build system 
+[[https://github.com/tsoding/nobuild][nobuild.h]]
+
+*** Arenas / Memory safety
+[[https://github.com/tsoding/bm/blob/master/common/arena.c][arena.h]]
+
+**** bm (source of arenas)
+[[https://github.com/tsoding/bm][bm]]
 
 ** License
 
