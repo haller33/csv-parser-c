@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+// #include <stddef.h>
 
 #define ARENA_IMPLEMENTATION
 #include "../../resources/arena.h"
@@ -14,6 +15,14 @@
 #define CUSTOM_ALLOC
 #define CSV_ALLOC _arena_context_alloc_noshare
 #endif // CUSTOM_ALLOC
+
+#ifndef CUSTOM_MALLOC_C
+#define CUSTOM_MALLOC_C malloc
+#endif
+
+#ifndef CUSTOM_FREE_MALLOC_C
+#define CUSTOM_FREE_MALLOC_C free
+#endif
 
 #ifndef JUST_MALLOC
 #define JUST_MALLOC false
@@ -30,12 +39,15 @@ typedef struct _csv_adt {
   char *csv_current_line_buff;
   char **csv_columns_names;
   char ***csv_raw_data;
+
   size_t csv_current_count_row;
   size_t _columns_count;
   size_t _rows_count;
   size_t _max_name_cell;
+
   bool _full_data;
   FILE *_pdp;
+
   Arena *_context_arena;
 } csv_adt;
 
@@ -48,8 +60,17 @@ csvc_interate_increase_file(csv_adt *adt);
 char ** //
 csvc_current_item(csv_adt *adt);
 
+size_t //
+csvc_current_line_number(csv_adt *adt);
+
+char * //
+csvc_stringfy_arr_char(csv_adt *adt, char **chr_arr);
+
+char * //
+csvc_stringfy_current_arr_char(csv_adt *adt);
+
 char * // get cell from respective column name
-csvc_cell_from_column_by_name(csv_adt *adt, char** name_column);
+csvc_cell_from_column_by_name(csv_adt *adt, char **name_column);
 
 char ** // ["1", "chat", "csv", "0"]
 csvc_read_idx_row(csv_adt *adt, size_t line);
@@ -72,6 +93,9 @@ csvc_close_file_path(csv_adt *adt);
 void //
 csvc_free_context(csv_adt *adt);
 
+void //
+_csvc_interate_over_item_now_cleanup(csv_adt *adt);
+
 char ** //
 _csvc_parser_line(csv_adt *adt, char *buff);
 
@@ -89,6 +113,9 @@ _csvc_count_chr_on_str(char *str, char chr);
 
 size_t //
 _csvc_count_columns(char **buff);
+
+size_t //
+getline(char **lineptr, size_t *n, FILE *stream);
 
 #endif // CSVPARSERC_H_
 
@@ -111,6 +138,7 @@ csvc_interate_increase_file(csv_adt *adt) {
   if (read != (size_t)-1) {
     return true;
   } else {
+    adt->_rows_count = adt->csv_current_count_row += 1;
     return false;
   }
 
@@ -118,25 +146,71 @@ csvc_interate_increase_file(csv_adt *adt) {
 }
 
 char * // get cell from respective column name
-csvc_cell_from_column_by_name(csv_adt *adt, char** name_column){
+csvc_cell_from_column_by_name(csv_adt *adt, char **name_column) {
+  assert(adt);
+  assert(name_column);
 
+  // TODO
+  //
+  return (char *)NULL;
 }
-
 
 char ** //
 csvc_current_line(csv_adt *adt) {
   assert(adt);
   assert(adt->_pdp);
+  assert(adt->csv_current_line_buff);
 
-  char** buff = _csvc_parser_line(adt, adt->csv_current_line_buff);
+  char **buff = _csvc_parser_line(adt, adt->csv_current_line_buff);
+
+  _csvc_interate_over_item_now_cleanup(adt);
+
+  return buff;
+}
+
+char * //
+csvc_stringfy_current_arr_char(csv_adt *adt) {
+  assert(adt);
+
+  _csvc_interate_over_item_now_cleanup(adt);
+
+  return adt->csv_current_line_buff;
+}
+
+void //
+_csvc_interate_over_item_now_cleanup(csv_adt *adt) {
+  assert(adt);
 
   if (adt->csv_current_count_row == 0) {
+    char **buff = _csvc_parser_line(adt, adt->csv_current_line_buff);
+
     adt->_columns_count = _csvc_count_columns(buff);
     adt->csv_columns_names = buff;
   }
   adt->csv_current_count_row += 1;
 
-  return buff;
+
+  CUSTOM_FREE_MALLOC_C(adt->csv_current_line_buff);
+  adt->csv_current_line_buff = NULL;
+
+}
+
+char * //
+csvc_stringfy_arr_char(csv_adt *adt, char **chr_arr) {
+  assert(adt);
+  assert(chr_arr);
+
+  // TODO
+
+  return (char *)NULL;
+}
+
+size_t //
+csvc_current_line_number(csv_adt *adt) {
+  assert(adt);
+  assert(adt->csv_current_count_row);
+
+  return adt->csv_current_count_row;
 }
 
 char ** // ["1", "chat", "csv", "0"]
@@ -158,8 +232,11 @@ csvc_item_idx_row_colum(csv_adt *adt, size_t line, size_t colum) {
   assert(adt);
   assert(line);
   assert(colum);
-  assert(colum < adt->_columns_count);
-  assert(line < adt->_rows_count);
+
+  if (adt->_full_data) {
+    assert(colum < adt->_columns_count);
+    assert(line < adt->_rows_count);
+  }
 
   if (adt->_full_data) {
 
@@ -219,7 +296,7 @@ _csvc_count_lines(char *file_name_path) {
   return count;
 }
 
-csv_adt * // read all data to memory
+csv_adt * // read all data to memory, dump into memory
 csvc_dump_full_csv(char *file_path) {
   assert(file_path);
 
@@ -252,7 +329,7 @@ csvc_dump_full_csv(char *file_path) {
     raw_data[relative_count] = _csvc_parser_line(ctx_adt, line_ptr);
     relative_count += 1;
   }
-  free(line_ptr);
+  CUSTOM_FREE_MALLOC_C(line_ptr);
 
   ctx_adt->csv_raw_data = raw_data;
 
@@ -272,8 +349,8 @@ csvc_init_read_file_path(char *file_name_path) {
     return (csv_adt *)NULL;
   }
 
-  csv_adt *_adt_new = (csv_adt *)malloc(sizeof(csv_adt));
-  Arena *_arena_new = (Arena *)malloc(sizeof(Arena));
+  csv_adt *_adt_new = (csv_adt *)CUSTOM_MALLOC_C(sizeof(csv_adt));
+  Arena *_arena_new = (Arena *)CUSTOM_MALLOC_C(sizeof(Arena));
 
   memset(_arena_new, 0, sizeof(Arena));
 
@@ -304,15 +381,20 @@ csvc_free_context(csv_adt *adt) {
   assert(adt);
 
   arena_free(adt->_context_arena);
-  free(adt->_context_arena);
+  CUSTOM_FREE_MALLOC_C(adt->_context_arena);
+  if (adt->csv_current_line_buff) {
+    CUSTOM_FREE_MALLOC_C(adt->csv_current_line_buff);
+  }
 
   fclose(adt->_pdp);
 
-  free(adt);
+  CUSTOM_FREE_MALLOC_C(adt);
 }
 
 size_t //
 _csvc_get_idx_chr(char *string, char c) {
+  assert(string);
+  assert(c);
 
   char *str = strchr(string, c);
 
@@ -326,6 +408,8 @@ _csvc_get_idx_chr(char *string, char c) {
 
 size_t //
 _csvc_count_chr_on_str(char *str, char chr) {
+  assert(str);
+  assert(chr);
 
   const char *p = str;
   size_t count = 0;
@@ -343,11 +427,14 @@ _csvc_count_chr_on_str(char *str, char chr) {
 
 char ** //
 _csvc_alloc_chr_array(csv_adt *adt, size_t arr_size) {
+  assert(adt);
+  assert(arr_size);
+  assert(arr_size > 0);
 
   char **ret_char_arr = NULL;
 
 #if JUST_MALLOC
-  ret_char_arr = (char **)malloc(sizeof(char **) * arr_size);
+  ret_char_arr = (char **)CUSTOM_MALLOC_C(sizeof(char **) * arr_size);
 #else
   ret_char_arr = (char **)CSV_ALLOC(adt, sizeof(char **) * arr_size);
 #endif
@@ -355,7 +442,7 @@ _csvc_alloc_chr_array(csv_adt *adt, size_t arr_size) {
   for (size_t i = 0; i < arr_size; i++) {
 
 #if JUST_MALLOC
-    (ret_char_arr)[i] = (char *)malloc(sizeof(char) * MAX_NAME_CELL);
+    (ret_char_arr)[i] = (char *)CUSTOM_MALLOC_C(sizeof(char) * MAX_NAME_CELL);
 #else
     (ret_char_arr)[i] = (char *)CSV_ALLOC(adt, sizeof(char) * MAX_NAME_CELL);
 #endif
@@ -404,7 +491,6 @@ _csvc_parser_line(csv_adt *adt, char *buff) {
 
 size_t //
 _csvc_count_columns(char **buff) {
-
   assert(buff);
 
   size_t count = 0;

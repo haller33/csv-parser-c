@@ -40,15 +40,8 @@ main(int argc, char *argv[]) {
     }
   }
 
-  /*
-  for(size_t i = 0; i < ctx_neo->_rows_count; i++) {
-    for(int j = 0; j < (int)ctx_neo->_columns_count; j++) {
-      printf("%s ",ctx_neo->csv_raw_data[i][j]);
-    }
-    printf("\n");
-  }*/
-
   csvc_free_context(ctx_neo);
+
 
   return 0;
 }
