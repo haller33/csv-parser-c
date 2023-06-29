@@ -38,6 +38,7 @@
 #endif
 
 typedef struct _csv_adt {
+  char *_csvc_file_path;
   char *csv_current_line_buff;
   char **csv_columns_names;
   char ***csv_raw_data;
@@ -82,6 +83,9 @@ csvc_item_idx_colum(csv_adt *adt, size_t colum);
 
 csv_adt * // read all data to memory
 csvc_dump_full_csv(char *file_path);
+
+csv_adt * // read all data to memory
+csvc_dump_full_csv_to_memory(csv_adt *adt);
 
 csv_adt * //
 csvc_init_read_file_path(char *file_name);
@@ -292,40 +296,47 @@ csv_adt * // read all data to memory, dump into memory
 csvc_dump_full_csv(char *file_path) {
   assert(file_path);
 
+  csv_adt *ctx_adt = csvc_init_read_file_path(file_path);
+
+  return csvc_dump_full_csv_to_memory(ctx_adt);
+}
+
+csv_adt * //
+csvc_dump_full_csv_to_memory(csv_adt *adt) {
+  assert(adt);
+
   size_t read;
   char *line_ptr = NULL;
   size_t len = 0;
 
-  size_t file_lines_number = _csvc_count_lines(file_path);
-  csv_adt *ctx_adt = csvc_init_read_file_path(file_path);
-
-  ctx_adt->_rows_count = file_lines_number;
+  size_t file_lines_number = _csvc_count_lines(adt->_csvc_file_path);
+  adt->_rows_count = file_lines_number;
 
   // actual data to be used for represent the CSV
   char ***raw_data =
-      (char ***)CSV_ALLOC(ctx_adt, sizeof(char ***) * file_lines_number);
+      (char ***)CSV_ALLOC(adt, sizeof(char ***) * file_lines_number);
 
-  read = getline(&line_ptr, &len, ctx_adt->_pdp);
+  read = getline(&line_ptr, &len, adt->_pdp);
   file_lines_number -= 1; // for header file, columns
-  ctx_adt->csv_columns_names = _csvc_parser_line(ctx_adt, line_ptr);
+  adt->csv_columns_names = _csvc_parser_line(adt, line_ptr);
 
-  const size_t columns_count = _csvc_count_columns(ctx_adt->csv_columns_names);
-  ctx_adt->_columns_count = columns_count;
+  const size_t columns_count = _csvc_count_columns(adt->csv_columns_names);
+  adt->_columns_count = columns_count;
 
   // for flag that the data aready has been dump to main memory
-  ctx_adt->_full_data = true;
+  adt->_full_data = true;
 
   size_t relative_count = 0;
-  while ((read = getline(&line_ptr, &len, ctx_adt->_pdp)) != (size_t)-1) {
+  while ((read = getline(&line_ptr, &len, adt->_pdp)) != (size_t)-1) {
 
-    raw_data[relative_count] = _csvc_parser_line(ctx_adt, line_ptr);
+    raw_data[relative_count] = _csvc_parser_line(adt, line_ptr);
     relative_count += 1;
   }
   CUSTOM_FREE_MALLOC_C(line_ptr);
 
-  ctx_adt->csv_raw_data = raw_data;
+  adt->csv_raw_data = raw_data;
 
-  return ctx_adt;
+  return adt;
 }
 
 csv_adt * //
@@ -346,6 +357,7 @@ csvc_init_read_file_path(char *file_name_path) {
 
   memset(_arena_new, 0, sizeof(Arena));
 
+  _adt_new->_csvc_file_path = file_name_path;
   _adt_new->csv_current_line_buff = NULL;
   _adt_new->csv_current_count_row = 0;
   _adt_new->_rows_count = 0;
