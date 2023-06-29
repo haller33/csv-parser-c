@@ -27,6 +27,7 @@
 #endif
 
 typedef struct _csv_adt {
+  char *csv_current_line_buff;
   char **csv_columns_names;
   char ***csv_raw_data;
   size_t csv_current_count_row;
@@ -40,6 +41,15 @@ typedef struct _csv_adt {
 
 void * //
 _arena_context_alloc_noshare(csv_adt *adt, size_t size);
+
+bool //
+csvc_interate_increase_file(csv_adt *adt);
+
+char ** //
+csvc_current_item(csv_adt *adt);
+
+char * // get cell from respective column name
+csvc_cell_from_column_by_name(csv_adt *adt, char** name_column);
 
 char ** // ["1", "chat", "csv", "0"]
 csvc_read_idx_row(csv_adt *adt, size_t line);
@@ -88,6 +98,45 @@ void * // thread safe std alloc
 _arena_context_alloc_noshare(csv_adt *adt, size_t size) {
   assert(adt->_context_arena && "arena not pass");
   return arena_alloc(adt->_context_arena, size);
+}
+
+bool //
+csvc_interate_increase_file(csv_adt *adt) {
+  assert(adt);
+  size_t read = 0;
+  size_t len = 0;
+
+  read = getline(&adt->csv_current_line_buff, &len, adt->_pdp);
+
+  if (read != (size_t)-1) {
+    return true;
+  } else {
+    return false;
+  }
+
+  return false;
+}
+
+char * // get cell from respective column name
+csvc_cell_from_column_by_name(csv_adt *adt, char** name_column){
+
+}
+
+
+char ** //
+csvc_current_line(csv_adt *adt) {
+  assert(adt);
+  assert(adt->_pdp);
+
+  char** buff = _csvc_parser_line(adt, adt->csv_current_line_buff);
+
+  if (adt->csv_current_count_row == 0) {
+    adt->_columns_count = _csvc_count_columns(buff);
+    adt->csv_columns_names = buff;
+  }
+  adt->csv_current_count_row += 1;
+
+  return buff;
 }
 
 char ** // ["1", "chat", "csv", "0"]
@@ -228,6 +277,7 @@ csvc_init_read_file_path(char *file_name_path) {
 
   memset(_arena_new, 0, sizeof(Arena));
 
+  _adt_new->csv_current_line_buff = NULL;
   _adt_new->csv_current_count_row = 0;
   _adt_new->_rows_count = 0;
   _adt_new->csv_raw_data = NULL;
