@@ -110,6 +110,14 @@ _csvc_alloc_chr_array(csv_adt *adt, size_t arr_size);
 size_t //
 _csvc_get_idx_chr(char *buff, char chr);
 
+// implement this, because some error on strncpy
+// https://stackoverflow.com/questions/4593907/difference-between-strncpy-and-memcpy
+// they verify some non termination caracter, or NULL, the rest of array, they fill with 'zero'
+// probably this fill is causing memory problems on the Arena
+char * //
+_csvc_strcpy_to(char *dest, char *origin, size_t lenght_size);
+
+
 size_t //
 _csvc_count_chr_on_str(char *str, char chr);
 
@@ -183,12 +191,25 @@ csvc_current_line(csv_adt *adt) {
   if (adt->csv_current_count_row == 0) {
 
     adt->_columns_count = _csvc_count_columns(buff_chr_arr);
-
     adt->csv_columns_names = buff_chr_arr;
   }
   adt->csv_current_count_row += 1;
 
   return buff_chr_arr;
+}
+
+char * // implement this, because some memory errors
+_csvc_strcpy_to(char *dest, char *origin, size_t lenght_size) {
+  assert(dest);
+  assert(origin);
+  assert(lenght_size);
+  assert(lenght_size > 0);
+
+  for (size_t i = 0; i < lenght_size; ++i) {
+    dest[i] = origin[i];
+  }
+
+  return dest;
 }
 
 char * //
@@ -205,10 +226,12 @@ csvc_stringfy_arr_char(csv_adt *adt, char **chr_arr) {
 
   int relative_counter = 0;
   for (size_t i = 0; i < columns_size_digit; i++) {
-    int size_str_chr = strlen(chr_arr[i]);
+    char *tmp = chr_arr[i];
+    // arena_summary(adt->_context_arena);
+    int size_str_chr = strlen(tmp);
 
-    strncpy(&new_str_chr[relative_counter], chr_arr[i], size_str_chr);
-    strncpy(&new_str_chr[relative_counter + size_str_chr], caracter_space, 1);
+    _csvc_strcpy_to(&new_str_chr[relative_counter], chr_arr[i], size_str_chr);
+    _csvc_strcpy_to(&new_str_chr[relative_counter + size_str_chr], caracter_space, 1);
 
     relative_counter = relative_counter + size_str_chr + 1;
   }
@@ -500,10 +523,10 @@ _csvc_parser_line(csv_adt *adt, char *buff) {
 
     if (current_idx > MAX_NAME_CELL) {
 
-      strncpy(new_str[relative_count], &buff[idx], MAX_NAME_CELL);
+      _csvc_strcpy_to(new_str[relative_count], &buff[idx], MAX_NAME_CELL+1);
     } else {
 
-      strncpy(new_str[relative_count], &buff[idx], current_idx);
+      _csvc_strcpy_to(new_str[relative_count], &buff[idx], current_idx);
     }
 
     relative_count += 1;
