@@ -80,7 +80,7 @@ main(int argc, char *argv[]) {
     relative_count += 1;
   }
 
-  csvc_free_context(ctx);
+  csvc_free_context(ctx_two);
 
 
   return 0;
