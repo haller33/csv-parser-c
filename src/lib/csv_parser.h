@@ -51,7 +51,7 @@ char ** // ["city", "fortal", "maracanau"]
 csvc_item_idx_colum(csv_adt *adt, size_t colum);
 
 csv_adt * // read all data to memory
-csvc_dump_csv(char *file_path);
+csvc_dump_full_csv(char *file_path);
 
 csv_adt * //
 csvc_init_read_file_path(char *file_name);
@@ -171,7 +171,7 @@ _csvc_count_lines(char *file_name_path) {
 }
 
 csv_adt * // read all data to memory
-csvc_dump_csv(char *file_path) {
+csvc_dump_full_csv(char *file_path) {
   assert(file_path);
 
   size_t read;
@@ -179,37 +179,30 @@ csvc_dump_csv(char *file_path) {
   size_t len = 0;
 
   size_t file_lines_number = _csvc_count_lines(file_path);
-
-  file_lines_number -= 1; // for header file
-
   csv_adt *ctx_adt = csvc_init_read_file_path(file_path);
 
   ctx_adt->_rows_count = file_lines_number;
 
+  // actual data to be used for represent the CSV
   char ***raw_data =
       (char ***)CSV_ALLOC(ctx_adt, sizeof(char ***) * file_lines_number);
 
   read = getline(&line_ptr, &len, ctx_adt->_pdp);
-
+  file_lines_number -= 1; // for header file, columns
   ctx_adt->csv_columns_names = _csvc_parser_line(ctx_adt, line_ptr);
 
   const size_t columns_count = _csvc_count_columns(ctx_adt->csv_columns_names);
-
   ctx_adt->_columns_count = columns_count;
 
-  // printf("Hello World\n");
-
+  // for flag that the data aready has been dump to main memory
   ctx_adt->_full_data = true;
 
   size_t relative_count = 0;
-
   while ((read = getline(&line_ptr, &len, ctx_adt->_pdp)) != (size_t)-1) {
 
     raw_data[relative_count] = _csvc_parser_line(ctx_adt, line_ptr);
-
     relative_count += 1;
   }
-
   free(line_ptr);
 
   ctx_adt->csv_raw_data = raw_data;
@@ -274,6 +267,7 @@ _csvc_get_idx_chr(char *string, char c) {
   char *str = strchr(string, c);
 
   if (str == NULL) {
+
     return strlen(string);
   }
 
@@ -287,7 +281,9 @@ _csvc_count_chr_on_str(char *str, char chr) {
   size_t count = 0;
 
   do {
+
     if (*p == chr) {
+
       count++;
     }
   } while (*(p++));
@@ -327,13 +323,10 @@ _csvc_parser_line(csv_adt *adt, char *buff) {
   assert(buff);
 
   char **new_str = NULL;
-
   const char target = SEPARATION_CARACTER;
 
   size_t number_of_columns = _csvc_count_chr_on_str(buff, target);
-
   number_of_columns += 1; // for the default 0 count, and last column
-
   new_str = _csvc_alloc_chr_array(adt, number_of_columns);
 
   // int len = strlen(buff);
@@ -368,8 +361,9 @@ _csvc_count_columns(char **buff) {
   while (buff[count] != NULL) {
     count += 1;
   }
-  if (count == 0)
+  if (count == 0) {
     return 0;
+  }
 
   return count - 1;
 }
