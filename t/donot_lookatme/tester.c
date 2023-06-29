@@ -15,12 +15,22 @@ main(int argc, char *argv[]) {
     return 127;
   }
 
-  /*
-   * on this example, we can see, how to read data from the file, on a
-   * interative manner with this example, we can simple pass the file name and
-   * then, interate over it, geting the data from eatch row and Cell .
-   *
-   */
+  csv_adt *ctx = csvc_init_read_file_path(argv[1]);
+
+  char str[] = "some,text,data";
+  char **arr_vet_chr = _csvc_parser_line(ctx, str);
+
+  for (int i = 0; i < 3; i++) {
+    printf("%s\n", arr_vet_chr[i]);
+  }
+
+  size_t columns_c = _csvc_count_columns(arr_vet_chr);
+  printf("%d\n", (int)columns_c);
+
+  csvc_free_context(ctx);
+
+  // csv_adt *ctx_neo = csvc_dump_full_csv(argv[1]);
+
   csv_adt *ctx_neo = csvc_init_read_file_path(argv[1]);
 
   while (csvc_interate_increase_file(ctx_neo)) {
@@ -29,9 +39,11 @@ main(int argc, char *argv[]) {
     char *str = csvc_stringfy_arr_char(ctx_neo, current_arr);
 
     printf("%s\n", str);
+
   }
 
   csvc_free_context(ctx_neo);
+
 
   return 0;
 }
