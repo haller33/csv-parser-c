@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #define ARENA_IMPLEMENTATION
 #include "../../resources/arena.h"
@@ -61,7 +62,7 @@ bool //
 csvc_interate_increase_file(csv_adt *adt);
 
 char ** //
-csvc_current_item(csv_adt *adt);
+csvc_current_line(csv_adt *adt);
 
 size_t //
 csvc_current_line_number(csv_adt *adt);
@@ -69,8 +70,11 @@ csvc_current_line_number(csv_adt *adt);
 char * //
 csvc_stringfy_arr_char(csv_adt *adt, char **chr_arr);
 
+size_t // get index of respective column name
+csvc_idx_of_column_by_name(csv_adt *adt, char **chr_arr, char *name_column);
+
 char * // get cell from respective column name
-csvc_cell_from_column_by_name(csv_adt *adt, char **name_column);
+csvc_cell_from_column_by_name(csv_adt *adt, char **chr_arr, char *name_column);
 
 char ** // ["1", "chat", "csv", "0"]
 csvc_read_idx_row(csv_adt *adt, size_t line);
@@ -114,8 +118,9 @@ _csvc_count_chr_on_str(char *str, char chr);
 size_t //
 _csvc_count_columns(char **buff);
 
-size_t //
-getline(char **lineptr, size_t *n, FILE *stream);
+/// do not compile on android / termux
+// size_t //
+// getline(char **lineptr, size_t *n, FILE *stream);
 
 #endif // CSVPARSERC_H_
 
@@ -145,15 +150,107 @@ csvc_interate_increase_file(csv_adt *adt) {
   return false;
 }
 
-char * // get cell from respective column name
-csvc_cell_from_column_by_name(csv_adt *adt, char **name_column) {
+size_t // get cell from respective column name, index, not safer
+csvc_idx_of_column_by_name(csv_adt *adt, char **chr_arr, char *name_column) {
   assert(adt);
+  assert(chr_arr);
   assert(name_column);
 
-  // TODO
-  //
-  return (char *)NULL;
+  size_t relative_count = 0;
+  size_t num_columns = _csvc_count_columns(chr_arr);
+
+  for (size_t i = 0; i < num_columns; i++) {
+
+    if (strcmp(chr_arr[i], name_column) == 0) {
+      break;
+    }
+
+    relative_count += 1;
+  }
+
+  if (relative_count > num_columns){
+    return num_columns;
+  }
+
+  return relative_count;
 }
+
+char * // get cell from respective column name, index
+csvc_cell_from_column_by_name(csv_adt *adt, char **chr_arr, char *name_column) {
+  assert(adt);
+  assert(chr_arr);
+  assert(name_column);
+
+  size_t relative_count = csvc_idx_of_column_by_name(adt, chr_arr, name_column);
+
+  if (chr_arr[relative_count] == NULL) {
+    return (char*)NULL;
+  }
+
+  return chr_arr[relative_count];
+}
+char * //
+_csvc_ltrim(char *s)
+{
+  assert(s);
+  while(isspace(*s)) {
+    s++;
+  }
+  return s;
+}
+
+char * //
+_csvc_rtrim(char *s)
+{
+  assert(s);
+  char* back = s + strlen(s);
+  while(isspace(*--back));
+  *(back+1) = '\0';
+  return s;
+}
+
+char * //
+_csvc_trim(char *s)
+{
+  assert(s);
+  return _csvc_rtrim(_csvc_ltrim(s));
+}
+
+char **
+_csvc_trim_arr_chr(csv_adt *adt, char **arr_str_chr) {
+  assert(adt);
+  assert(arr_str_chr);
+
+  size_t columns_count = _csvc_count_columns(arr_str_chr);
+  char **arr_new_str = _csvc_alloc_chr_array(adt, columns_count);
+
+  /// for better searching, on tables.
+  //  trim the names.
+  for(size_t i = 0; i < columns_count; i++){
+    char *tmp_chr = NULL;
+    tmp_chr = _csvc_alloc_chr_array(adt, 1)[0];
+    strcpy(tmp_chr, arr_str_chr[i]);
+
+    char *tmp_chr_str = _csvc_trim(tmp_chr);
+    arr_new_str[i] = tmp_chr_str;
+  }
+
+  return arr_new_str;
+}
+
+char * //
+csvc_current_line_by_column_name(csv_adt *adt, char *column_name) {
+  assert(adt);
+  assert(column_name);
+
+  char *trim_str = _csvc_trim(column_name);
+
+  char **line_current = csvc_current_line(adt);
+  char *cell = csvc_cell_from_column_by_name(adt, line_current, trim_str);
+
+  return cell;
+}
+
 
 char ** //
 csvc_current_line(csv_adt *adt) {
@@ -169,7 +266,10 @@ csvc_current_line(csv_adt *adt) {
   if (adt->csv_current_count_row == 0) {
 
     adt->_columns_count = _csvc_count_columns(buff_chr_arr);
-    adt->csv_columns_names = buff_chr_arr;
+
+    char **arr_new_str = _csvc_trim_arr_chr(adt, buff_chr_arr);
+
+    adt->csv_columns_names = arr_new_str;
   }
   adt->csv_current_count_row += 1;
 
@@ -204,7 +304,6 @@ csvc_stringfy_arr_char(csv_adt *adt, char **chr_arr) {
 size_t //
 csvc_current_line_number(csv_adt *adt) {
   assert(adt);
-  assert(adt->csv_current_count_row);
 
   return adt->csv_current_count_row;
 }
@@ -213,10 +312,9 @@ char ** // ["1", "chat", "csv", "0"]
 csvc_read_idx_row(csv_adt *adt, size_t line) {
   assert(adt);
   assert(line);
-  assert(line < adt->_rows_count);
 
   if (adt->_full_data) {
-
+    assert(line < adt->_rows_count);
     return adt->csv_raw_data[line];
   }
 
@@ -246,9 +344,9 @@ char ** // ["city", "fortal", "maracanau"]
 csvc_item_idx_colum(csv_adt *adt, size_t colum) {
   assert(adt);
   assert(colum);
-  assert(colum < adt->_columns_count);
 
   if (adt->_full_data) {
+    assert(colum < adt->_columns_count);
 
     char **raw_colum = _csvc_alloc_chr_array(adt, adt->_rows_count);
 
@@ -377,7 +475,9 @@ csvc_init_read_file_path(char *file_name_path) {
 void //
 csvc_close_file_path(csv_adt *adt) {
   assert(adt);
-  fclose(adt->_pdp);
+  if (adt->_pdp) {
+    fclose(adt->_pdp);
+  }
 }
 
 void //
@@ -390,15 +490,15 @@ csvc_free_context(csv_adt *adt) {
     CUSTOM_FREE_MALLOC_C(adt->csv_current_line_buff);
   }
 
-  fclose(adt->_pdp);
+  csvc_close_file_path(adt);
 
   CUSTOM_FREE_MALLOC_C(adt);
 }
 
 size_t //
 _csvc_get_idx_chr(char *string, char c) {
+  // c cam be '\0' caracter
   assert(string);
-  assert(c);
 
   char *str = strchr(string, c);
 
@@ -412,8 +512,8 @@ _csvc_get_idx_chr(char *string, char c) {
 
 size_t //
 _csvc_count_chr_on_str(char *str, char chr) {
+  // chr can be a '\0' caracter
   assert(str);
-  assert(chr);
 
   const char *p = str;
   size_t count = 0;
