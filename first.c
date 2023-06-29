@@ -7,7 +7,7 @@
 
 #define FOLDER_BIN_FILES "bin"
 
-#define CFLAGS "-Wall", "-O0", "-Wextra", "-g", "-std=c99", "-pedantic"
+#define CFLAGS "-Wall", "-O0", "-Wextra", "-g3", "-std=c99"
 
 #define CLIBS "resources/arena.c"
 
