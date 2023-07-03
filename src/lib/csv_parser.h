@@ -1,4 +1,8 @@
 
+#if !defined(CSVPARSERC_IMPLEMENTATION)
+#define CSVPARSERC_IMPLEMENTATION
+#endif
+
 #ifndef CSVPARSERC_H_
 #define CSVPARSERC_H_
 
@@ -227,6 +231,9 @@ csvc_stringfy_arr_char(csv_adt *adt, char **chr_arr) {
   int relative_counter = 0;
   for (size_t i = 0; i < columns_size_digit; i++) {
     char *tmp = chr_arr[i];
+    if (!tmp) {
+      break;
+    }
     // arena_summary(adt->_context_arena);
     int size_str_chr = strlen(tmp);
 
@@ -511,7 +518,7 @@ _csvc_parser_line(csv_adt *adt, char *buff) {
 
   size_t number_of_columns = _csvc_count_chr_on_str(buff, target);
   number_of_columns += 1; // for the default 0 count, and last column
-  new_str = _csvc_alloc_chr_array(adt, number_of_columns);
+  new_str = _csvc_alloc_chr_array(adt, number_of_columns+2);
 
   // int len = strlen(buff);
   size_t idx = 0;
@@ -532,6 +539,8 @@ _csvc_parser_line(csv_adt *adt, char *buff) {
     relative_count += 1;
     idx = idx + current_idx + 1;
   }
+
+  new_str[number_of_columns+1] = NULL;
 
   return new_str;
 }
